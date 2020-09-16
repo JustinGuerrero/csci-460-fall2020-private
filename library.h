@@ -1,0 +1,6 @@
+#ifndef NEWCSCISHIT_LIBRARY_H
+#define NEWCSCISHIT_LIBRARY_H
+
+void hello(void);
+
+#endif //NEWCSCISHIT_LIBRARY_H

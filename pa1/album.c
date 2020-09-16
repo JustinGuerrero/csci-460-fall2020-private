@@ -9,30 +9,42 @@
 #include <unistd.h>
 
 
+int resizePhoto(const char * program, char ** arg_list) { 
     //use the command line convert program from imagemagick
-	//use fork and exec so user doesn't wait-
-	//FILE *outputFile = fopen("photos/Es_Vedra_Sunset.jpg", "r");
-	// if(outputFile == NULL){
-		// printf("Error: Failed to open stuff\n");
-		// return 1;
-	// }
-	// char *resize[80];
-	// resize[0] = "magick convert argv[1] -resize 75% newPhoto1.png";
-	// resize[1] = NULL;
-	// execve(resize[0], resize, NULL);
-	// return 0;
-// }
-
-// void thumbNail(){
-    // //use the command line display program from imagemagick
 	
-	// FILE *fopen =(const char *photos/Es_Vedra_Sunset.jpg, const char *"r");
-	// photo[0] = FILE;
-	// char *resize[80];
-	// resize[0] = "magick convert argv[1] -resize 75% newPhoto1.png";
-	// resize[1] = NULL;
-	// execlp(resize[0], resize, NULL);
-// }
+  pid_t child_pid = fork();
+  if (child_pid != 0)
+    return child_pid;      /* This is the parent process.  */
+  else {
+    execvp(program, arg_list);     /* Now execute PROGRAM */
+	
+	fprintf (stderr, "An error occurred in execvp\n");
+    abort ();
+  } 
+}
+
+int thumbNail(const char * program2, char ** arg_list2){
+  pid_t child_pid = fork();
+  if (child_pid != 0)
+    return child_pid;      /* This is the parent process.  */
+  else {
+    execvp(program2, arg_list2);     /* Now execute PROGRAM */
+	
+	fprintf (stderr, "An error occurred in execvp\n");
+    abort ();
+  } 
+}
+int displayPhoto(const char *program3, char ** arg_list3){
+	  pid_t child_pid = fork();
+  if (child_pid != 0)
+    return child_pid;      /* This is the parent process.  */
+  else {
+    execvp(program3, arg_list3);     /* Now execute PROGRAM */
+	
+	fprintf (stderr, "An error occurred in execvp\n");
+    abort ();
+  } 
+}
 
 // void askUserRotate(){
     // //use the convert program here again with rotate function
@@ -51,19 +63,32 @@
 
     // // use convert program here
 // }
-int resizePhoto(const char * program, char ** arg_list) { 
-  pid_t child_pid = fork();
-  if (child_pid != 0)
-    return child_pid;      /* This is the parent process.  */
-  else {
-    execvp (program, arg_list);     /* Now execute PROGRAM */
-    fprintf (stderr, "An error occurred in execvp\n");
-    abort ();
-  } 
+
+int makeHTML(){
+	//do html stuff here
+	FILE *fptr = fopen("index.html","w");
+	if(fptr==NULL){
+		printf("Couldn't open file");
+		return 0;
+	}
+	else{
+		fprintf(fptr, "Content-Type: text/html\n\n");
+		fprintf(fptr, "<html>");
+		fprintf(fptr, "<head><title>Photo Album</title></head>");
+		fprintf(fptr, "<body>here is a body</body>");
+	}
+	return 0;
+		
 }
+
 int main() { 
-  char *arg_list[] = {"magick", "convert", "photos/Es_Vedra_Sunset", "-resize", "75%", "newPhoto", NULL};
-  resizePhoto("ls", arg_list); 
+  makeHTML();
+  char *arg_list3[] = {"display", "photos/newVedraPhotoThumb.png",NULL};  
+  char *arg_list2[] = {"convert", "photos/Es_Vedra_Sunset.jpg", "-resize", "25%", "photos/newVedraPhotoThumb.png",NULL};  
+  char *arg_list[] = {"convert", "photos/Es_Vedra_Sunset.jpg", "-resize", "75%", "photos/newVedraPhoto.png",NULL};
+  resizePhoto("convert", arg_list); 
+  thumbNail("convert", arg_list2);
+  displayPhoto("display", arg_list3);
   printf ("Main program exiting...\n");
   return 0; 
 }
