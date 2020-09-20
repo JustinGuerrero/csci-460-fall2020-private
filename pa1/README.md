@@ -3,7 +3,7 @@
 The purpose of this README is to inform the reader of the tasks, strategies, and ideas that are involved in program 1 for Operating Systems.
 
 The way I separated this document is in tasks. Each task is in the order of how I approached the assignment. 
-### VIDEO LINK: 
+### VIDEO LINK: https://montana.techsmithrelay.com/Cb1e?tab=Privacy
 ## Description
 ### Objective: Create A Web-Based Digital Photo Album
 Write a C program that allows a user to peruse a set of large images downloaded from a digital camera, and produce an HTML photo album and  practical experience with the topics listed below, in a way that’s tangible and (hopefully) a bit fun.
