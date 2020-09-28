@@ -1,0 +1,42 @@
+<<<<<<< HEAD:week04/.gitignore
+fork1 
+=======
+.DS_Store
+.dSYM
+
+fork1
+>>>>>>> e9050686bc46520ebcb5f2ff7fadad4da46f12a2:weeks-procs-threads/.gitignore
+fork2
+fork3
+forkbomb
+exec1
+exec2
+exec_display
+exec_convert
+write_html
+index.html
+photo_out.jpg
+pid
+pid2
+pipe
+killer
+hello
+hello-static
+mystery1
+uid
+probe
+address32
+address64
+malloc_mystery
+space
+defunct
+sf
+threads0
+threads1
+threads2
+<<<<<<< HEAD:week04/.gitignore
+=======
+atm
+thread_atm
+thread_spy
+>>>>>>> e9050686bc46520ebcb5f2ff7fadad4da46f12a2:weeks-procs-threads/.gitignore
