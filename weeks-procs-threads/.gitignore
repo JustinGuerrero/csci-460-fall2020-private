@@ -46,4 +46,12 @@ thread_spy
 >>>>>>> e9050686bc46520ebcb5f2ff7fadad4da46f12a2:weeks-procs-threads/.gitignore
 =======
 ipt
+<<<<<<< HEAD
 >>>>>>> 12e8393338732e4351d56d93a52ad7fbf8ebe809
+=======
+sync_lock
+sync_lock_tests
+sync_cvar
+sync_sem
+rand_test
+>>>>>>> 867b328b85d407756fdfcbfc2859d1422e233817
