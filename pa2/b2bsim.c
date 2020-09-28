@@ -49,11 +49,13 @@ static int VERBOSITY;
 static int crossedIt;
 static int changeDir;
 static int carsDrivingOneWay = 0;
+static boolean drivingOneWay;
+static volatile int currentDir = TO_BRIDGER;
 //static int TO_BRIDGER;
 //threading tools for one way safety
 pthread_mutex_t crossedLocker; // lock pthread for one way safety
 pthread_cond_t crossed; // crossed condition thread
-pthread_mutex_t oneWay; // manage the traffic
+pthread_mutex_t oneWay; // manage locking the traffic
 pthread_cond_t oneWayUnlock; //unlock the oneway for next wave of traffic
 pthread_mutex_t dirChangeCount; // counting which direction traffic is flowing
 pthread_cond_t dirChanged; // 1 or 0 for direction "boolean"
@@ -79,8 +81,38 @@ void *oneVehicle(void *arg){
 	
 }
 int arriveOneWay(int carCount, int direction)
-{
+{	
+	rc = 0;
 	
+	pthread_mutex_lock(&oneWay);
+	printf("car %d is on the one way facing %s", carCount, direction);
+	
+	while((carsDrivingOneWay >= MAXCARS) || (currentDir != direction) || drivingOneWay)
+	{
+		if(rc)
+		{
+			if(carsDrivingOneWay < 1)
+			{
+				drivingOneWay = false;
+				currentDir = (currentDir + 1)%2;
+				printf("direction is %d" currentDir);
+			}
+			else if(dirChangeCount >= crossedIt)
+			{
+				drivingOneWay = true;
+				dirChangeCount = 0;
+			}
+		}
+			rc = pthread_cond_timedwait(&oneWayUnlock, &oneWay);
+
+	}
+	pthread_mutex_lock(&changeDir);
+    dirChangeCount++;
+    pthread_mutex_unlock(&changeDir);
+    pthread_cond_signal(&dirChanged);
+	printf("putting car on the road towards %s\n", direction);
+	carsDrivingOneWay++;
+	pthread_mutex_unlock(&oneWay);
 }
 
 
