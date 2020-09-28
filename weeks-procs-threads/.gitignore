@@ -3,6 +3,9 @@ fork1
 =======
 .DS_Store
 .dSYM
+*.i
+*.s
+*.o
 
 fork1
 >>>>>>> e9050686bc46520ebcb5f2ff7fadad4da46f12a2:weeks-procs-threads/.gitignore
@@ -39,4 +42,8 @@ threads2
 atm
 thread_atm
 thread_spy
+<<<<<<< HEAD
 >>>>>>> e9050686bc46520ebcb5f2ff7fadad4da46f12a2:weeks-procs-threads/.gitignore
+=======
+ipt
+>>>>>>> 12e8393338732e4351d56d93a52ad7fbf8ebe809
