@@ -85,8 +85,6 @@ void *oneVehicle(void *arg){
 int arriveOneWay(int carCount, int direction)
 {	
 
-	struct timespec timeLeftWaiting;
-	struct timeval theTime;
 	int rc;
 	rc = 0;
 	
@@ -110,12 +108,12 @@ int arriveOneWay(int carCount, int direction)
 				changedDirCount = 0;
 			}
 		}
-			rc = pthread_cond_timedwait(&oneWayUnlock, &oneWay, &timeLeftWaiting);
+			rc = pthread_cond_wait(&oneWayUnlock, &oneWay);
 
 	}
-	pthread_mutex_lock(&changeDir); // lock direction change
+	pthread_mutex_lock(&dirChangeCount); // lock direction change
     changedDirCount++; // update the direction to the other way
-    pthread_mutex_unlock(&changeDir); // unlock direction change
+    pthread_mutex_unlock(&dirChangeCount); // unlock direction change
     pthread_cond_signal(&dirChanged); // send signal to others
 	printf("putting car on the road towards %s\n", direction); // print some garbage
 	carsDrivingOneWay++; // add a car to the one way
