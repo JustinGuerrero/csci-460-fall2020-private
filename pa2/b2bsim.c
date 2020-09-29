@@ -24,6 +24,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/time.h>
+#include <stdbool.h>
 
 
 // typedefs/structs
@@ -39,7 +40,7 @@ typedef struct{
 // global data shared by threads (e.g., the "oneway")
 #define TO_BRIDGER 0
 #define TO_BOZEMAN 1
-#define wait .1
+#define wait 
 // global synchronization primitives (e.g., mutexes, condition variables)
 //static ints
 static int MAXCARS;
@@ -48,8 +49,9 @@ static int RADNSEED;
 static int VERBOSITY;
 static int crossedIt;
 static int changeDir;
+static int changedDirCount;
 static int carsDrivingOneWay = 0;
-static boolean drivingOneWay;
+static bool drivingOneWay;
 static volatile int currentDir = TO_BRIDGER;
 //static int TO_BRIDGER;
 //threading tools for one way safety
@@ -82,64 +84,71 @@ void *oneVehicle(void *arg){
 }
 int arriveOneWay(int carCount, int direction)
 {	
+
+	struct timespec timeLeftWaiting;
+	struct timeval theTime;
+	int rc;
 	rc = 0;
 	
 	pthread_mutex_lock(&oneWay);
-	printf("car %d is on the one way facing %s", carCount, direction);
+	printf("car %d is on the one way facing %d", carCount, direction);
 	
 	while((carsDrivingOneWay >= MAXCARS) || (currentDir != direction) || drivingOneWay)
 	{
+		
 		if(rc)
 		{
 			if(carsDrivingOneWay < 1)
 			{
 				drivingOneWay = false;
 				currentDir = (currentDir + 1)%2;
-				printf("direction is %d" currentDir);
+				printf("direction is %d" , currentDir);
 			}
-			else if(dirChangeCount >= crossedIt)
+			else if(changedDirCount >= crossedIt)
 			{
 				drivingOneWay = true;
-				dirChangeCount = 0;
+				changedDirCount = 0;
 			}
 		}
-			rc = pthread_cond_timedwait(&oneWayUnlock, &oneWay);
+			rc = pthread_cond_timedwait(&oneWayUnlock, &oneWay, &timeLeftWaiting);
 
 	}
-	pthread_mutex_lock(&changeDir);
-    dirChangeCount++;
-    pthread_mutex_unlock(&changeDir);
-    pthread_cond_signal(&dirChanged);
-	printf("putting car on the road towards %s\n", direction);
-	carsDrivingOneWay++;
-	pthread_mutex_unlock(&oneWay);
+	pthread_mutex_lock(&changeDir); // lock direction change
+    changedDirCount++; // update the direction to the other way
+    pthread_mutex_unlock(&changeDir); // unlock direction change
+    pthread_cond_signal(&dirChanged); // send signal to others
+	printf("putting car on the road towards %s\n", direction); // print some garbage
+	carsDrivingOneWay++; // add a car to the one way
+	pthread_mutex_unlock(&oneWay); // unlock oneway function
+	pthread_cond_signal(&oneWayUnlock);//signal it's okay to continue traffic
 }
 
-
-/**
- * TODO: Implement oneVehicle.
- *
- * This is the main function of a car.
- *
- * 1. It simulates a car driving up to one side of the one-way.
- *    The car waits until it is okay to pass.
- *    => arriveOneWay()
- *
- * 2. Once it is safe to pass, the car proceeds onto the oneway and prints the current state of the simulation.
- *    (It is nice to simulate some time passing here - perhaps with a small "sleep" - cars take time to drive!)
- *    => onOneWay()
- *
- * 3. Finally, the thread (car) exits the one-way and finishes.
- *    => exitOneWay()
- */
-// WRITE CODE HERE. (DELETE THIS COMMENT)
-
+int onOneWay(int carCount, int direction)
+{
+	wait(1);
+	printf("car %d is on the road going towards %d", carCount, direction);
+}
+int exitOneWay(int carCount, int direction)
+{
+	pthread_mutex_lock(&oneWay);
+	printf("car %d has left the construction and is heading towards %d", carCount, direction);
+	carsDrivingOneWay -= 1;
+	printf("cars in construction: %d ", carsDrivingOneWay);
+	pthread_mutex_unlock(&oneWay);
+	
+	pthread_mutex_lock(&crossedLocker);
+	crossedIt++;
+	pthread_mutex_unlock(&crossedLocker);
+	
+	pthread_cond_signal(&dirChanged);
+}
 // ////////////////////////////////////////////////////////////////////////// //
 //                                   Main                                     //
 // ////////////////////////////////////////////////////////////////////////// //
 
 int main(int argc, char* argv[]) {
 
+	
     // TODO: handle input arguments (print help statement if needed)
 
     // TODO: initializations for simulation
