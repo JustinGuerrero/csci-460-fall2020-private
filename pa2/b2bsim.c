@@ -26,7 +26,6 @@
 #include <sys/time.h>
 #include <stdbool.h>
 
-
 // typedefs/structs
 typedef struct{
     pthread_mutex_t mutex;
@@ -44,11 +43,11 @@ typedef struct{
 // global synchronization primitives (e.g., mutexes, condition variables)
 //static ints
 static int MAXCARS;
-static int NUMCARS;
+// static int NUMCARS;
 static int RADNSEED;
-static int VERBOSITY;
+// static int VERBOSITY;
 static int crossedIt;
-static int changeDir;
+// static int changeDir;
 static int changedDirCount;
 static int carsDrivingOneWay = 0;
 static bool drivingOneWay;
@@ -64,27 +63,9 @@ pthread_cond_t dirChanged; // 1 or 0 for direction "boolean"
 //pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
  
- // TODO: Implement oneVehicle.
-void *oneVehicle(void *arg){
-	int carCount;
-	
-	pthread_mutex_lock(&(*(trafficLine_t*)(arg)).mutex); //this locks the traffic line moving on the road so other threads (cars) can't run in concurrency
-	carCount = (*(trafficLine_t*)(arg)).id; // gets the car number
-	int direction = (*(trafficLine_t*)(arg)).direction; // gets direction of cars
-	pthread_mutex_unlock(&(*(trafficLine_t*)(arg)).mutex); //unlocks the structure for the next wave of cars
-	
-	
-	//call functions to get this mf on the road
-	arriveOneWay(carCount, direction); // car arrives at one way
-	onOneWay(carCount, direction); //car is on the one way road
-	exitOneWay(carCount, direction); // car has left the one way road
-	
-	pthread_exit(NULL); // exit threading
-	
-}
+
 int arriveOneWay(int carCount, int direction)
 {	
-
 	int rc;
 	rc = 0;
 	
@@ -108,23 +89,25 @@ int arriveOneWay(int carCount, int direction)
 				changedDirCount = 0;
 			}
 		}
-			rc = pthread_cond_wait(&oneWayUnlock, &oneWay);
+		rc = pthread_cond_wait(&oneWayUnlock, &oneWay);
 
 	}
 	pthread_mutex_lock(&dirChangeCount); // lock direction change
     changedDirCount++; // update the direction to the other way
     pthread_mutex_unlock(&dirChangeCount); // unlock direction change
     pthread_cond_signal(&dirChanged); // send signal to others
-	printf("putting car on the road towards %s\n", direction); // print some garbage
+	printf("putting car on the road towards %d\n", direction); // print some garbage
 	carsDrivingOneWay++; // add a car to the one way
 	pthread_mutex_unlock(&oneWay); // unlock oneway function
 	pthread_cond_signal(&oneWayUnlock);//signal it's okay to continue traffic
+	return 0;
 }
 
 int onOneWay(int carCount, int direction)
 {
-	wait(1);
+	
 	printf("car %d is on the road going towards %d", carCount, direction);
+	return 0;
 }
 int exitOneWay(int carCount, int direction)
 {
@@ -139,26 +122,110 @@ int exitOneWay(int carCount, int direction)
 	pthread_mutex_unlock(&crossedLocker);
 	
 	pthread_cond_signal(&dirChanged);
+	return 0;
+}
+ // TODO: Implement oneVehicle.
+void *oneVehicle(void *arg){
+	int carCount;
+	printf("in oneVehicle");
+
+	pthread_mutex_lock(&(*(trafficLine_t*)(arg)).mutex); //this locks the traffic line moving on the road so other threads (cars) can't run in concurrency
+	carCount = (*(trafficLine_t*)(arg)).id; // gets the car number
+	int direction = (*(trafficLine_t*)(arg)).direction; // gets direction of cars
+	pthread_mutex_unlock(&(*(trafficLine_t*)(arg)).mutex); //unlocks the structure for the next wave of cars
+	
+	
+	//call functions to get this mf on the road
+	arriveOneWay(carCount, direction); // car arrives at one way
+	onOneWay(carCount, direction); //car is on the one way road
+	exitOneWay(carCount, direction); // car has left the one way road
+	
+	pthread_exit(NULL); // exit threading
+	
 }
 // ////////////////////////////////////////////////////////////////////////// //
 //                                   Main                                     //
 // ////////////////////////////////////////////////////////////////////////// //
 
 int main(int argc, char* argv[]) {
-
+	int iterator; //did i spell this right
+	int NUMCARS;
+	int RANDSEED;
+	int VERBOSITY;
+	int MAXCARS;
+	int r = rand() % 20;
+	crossedIt = 0;
+	changedDirCount = 0;
+	drivingOneWay = false;
 	
-    // TODO: handle input arguments (print help statement if needed)
-
-    // TODO: initializations for simulation
-
-    // TODO: main loop that drives the simulation
+	trafficLine_t trafficLine;
+	pthread_mutex_init(&trafficLine.mutex, NULL);
+	pthread_cond_init(&trafficLine.done, NULL);
+	
+	if(argc<2)
+	{
+		NUMCARS = 15;
+		MAXCARS = 3;
+		VERBOSITY = 0;
+		RANDSEED = r;
+		
+	}
+	else
+	{
+		NUMCARS = atoi(argv[1]);
+		MAXCARS = atoi(argv[2]);
+		RADNSEED = atoi(argv[3]);
+		VERBOSITY = atoi(argv[4]);
+	}
+	//create threads and some print statements
+	    // TODO: main loop that drives the simulation
     // In each iteration of the loop...
-    //   - initalize/update any info for keeping track of threads (cars)
-    //   - create a thread (car) that starts running "oneVehicle"
+	
+	
+	printf("Bridger to Bozeman traffic simulation\n");
+	printf("this was a horrible assignment\n");
+	printf("maximum number of cars allowed on the one way %d  :\n ", MAXCARS);
+	
+	    //   - create a thread (car) that starts running "oneVehicle"
+	pthread_t threads[NUMCARS];
+	pthread_mutex_lock(&trafficLine.mutex);
+	//threads for each car
+	for(iterator = 0; iterator<NUMCARS; iterator++)
+	{
+		trafficLine.id = iterator;
+		trafficLine.direction = rand() %2;
+		int thread_creation = pthread_create(&threads[iterator], NULL, oneVehicle, &trafficLine);
+		if(thread_creation)
+		{
+			printf("couldn't create thread %d\n", thread_creation);
+			exit(-1);
+		}
+	}
+		sleep(.01);
+		printf("threads are made\n");
+	
+	
+		//creating joins on threads 
+			// TODO: main loop that drives the simulation
+		// In each iteration of the loop...
+		for(iterator=0; iterator < NUMCARS; iterator++)
+		{
+			printf("we are here");
+			int thread_err_check = pthread_join(threads[iterator],NULL);
+			if(thread_err_check)
+			{
+				printf("couldn't join threads");
+			}
+		}
+		// TODO: wait for car threads to finish & cleanup.
+		pthread_mutex_destroy(&trafficLine.mutex);
+		printf("we destroyed");
+		pthread_cond_destroy (&trafficLine.done);
+		printf("we con destroyed");
 
-    // TODO: wait for car threads to finish & cleanup.
-
-    // TODO: display final state of your oneway simulation before exiting.
-
+		printf("TOTAL CARS CROSSED: %d\n", crossedIt);
     return 0;
+
+
+   
 }

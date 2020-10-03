@@ -1,14 +1,5 @@
-CC=gcc
-CFLAGS=-W -Wall -std=c11 -ggdb -pthread
-LIBS=
-SRCS= # b2bsim.c<<< TODO: PUT YOUR C SOURCE CODE FILE(S) HERE - BEFORE THE COMMENT - DELETE THIS COMMENT AFTER YOU'VE DONE THIS!
-OBJS=$(SRCS:.c=.o) b2bsim.o
-TARGET= # b2bsim<<< TODO: PUT THE NAME OF YOUR TARGET EXECUTABLE HERE - BEFORE THE COMMENT - DELETE THIS COMMENT AFTER YOU'VE DONE THIS!
+b2bsim: b2bsim.o
+	gcc -pthread -o b2bsim b2bsim.o
 
-$(TARGET): $(OBJS)
-	$(CC) $(CFLAGS) -o $(TARGET) $(OBJS) $(LIBS)
-
-//.PHONY: clean
-//clean:
-	rm -rf $(OBJS) $(TARGET) *~ # TODO: LIST ANY OTHER GENERATED FILES (WHICH SHOULD BE DELETED ON `make clean`) HERE - DELETE THIS COMMENT AFTER YOU'VE DONE THIS!
-
+b2bsim.o: b2bsim.c
+	 gcc -W -Wall -ggdb -pthread b2bsim.c 
