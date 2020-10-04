@@ -120,7 +120,7 @@ int exitOneWay(int carCount, int direction)
 	pthread_mutex_lock(&crossedLocker);
 	crossedIt++;
 	pthread_mutex_unlock(&crossedLocker);
-	
+	pthread_cond_signal(&crossed);
 	pthread_cond_signal(&dirChanged);
 	return 0;
 }
@@ -133,7 +133,7 @@ void *oneVehicle(void *arg){
 	carCount = (*(trafficLine_t*)(arg)).id; // gets the car number
 	int direction = (*(trafficLine_t*)(arg)).direction; // gets direction of cars
 	pthread_mutex_unlock(&(*(trafficLine_t*)(arg)).mutex); //unlocks the structure for the next wave of cars
-	
+	pthread_cond_signal(&(*(trafficLine_t*)(arg)).done);
 	
 	//call functions to get this mf on the road
 	arriveOneWay(carCount, direction); // car arrives at one way
@@ -147,85 +147,108 @@ void *oneVehicle(void *arg){
 //                                   Main                                     //
 // ////////////////////////////////////////////////////////////////////////// //
 
-int main(int argc, char* argv[]) {
-	int iterator; //did i spell this right
-	int NUMCARS;
-	int RANDSEED;
-	int VERBOSITY;
-	int MAXCARS;
-	int r = rand() % 20;
-	crossedIt = 0;
-	changedDirCount = 0;
-	drivingOneWay = false;
-	
-	trafficLine_t trafficLine;
-	pthread_mutex_init(&trafficLine.mutex, NULL);
-	pthread_cond_init(&trafficLine.done, NULL);
-	
-	if(argc<2)
-	{
-		NUMCARS = 15;
-		MAXCARS = 3;
-		VERBOSITY = 0;
-		RANDSEED = r;
-		
-	}
-	else
-	{
-		NUMCARS = atoi(argv[1]);
-		MAXCARS = atoi(argv[2]);
-		RADNSEED = atoi(argv[3]);
-		VERBOSITY = atoi(argv[4]);
-	}
-	//create threads and some print statements
-	    // TODO: main loop that drives the simulation
-    // In each iteration of the loop...
-	
-	
-	printf("Bridger to Bozeman traffic simulation\n");
-	printf("this was a horrible assignment\n");
-	printf("maximum number of cars allowed on the one way %d  :\n ", MAXCARS);
-	
-	    //   - create a thread (car) that starts running "oneVehicle"
-	pthread_t threads[NUMCARS];
-	pthread_mutex_lock(&trafficLine.mutex);
-	//threads for each car
-	for(iterator = 0; iterator<NUMCARS; iterator++)
-	{
-		trafficLine.id = iterator;
-		trafficLine.direction = rand() %2;
-		int thread_creation = pthread_create(&threads[iterator], NULL, oneVehicle, &trafficLine);
-		if(thread_creation)
-		{
-			printf("couldn't create thread %d\n", thread_creation);
-			exit(-1);
-		}
-	}
-		sleep(.01);
-		printf("threads are made\n");
-	
-	
-		//creating joins on threads 
-			// TODO: main loop that drives the simulation
-		// In each iteration of the loop...
-		for(iterator=0; iterator < NUMCARS; iterator++)
-		{
-			printf("we are here");
-			int thread_err_check = pthread_join(threads[iterator],NULL);
-			if(thread_err_check)
-			{
-				printf("couldn't join threads");
-			}
-		}
-		// TODO: wait for car threads to finish & cleanup.
-		pthread_mutex_destroy(&trafficLine.mutex);
-		printf("we destroyed");
-		pthread_cond_destroy (&trafficLine.done);
-		printf("we con destroyed");
+int main(int argc, char* argv[]){
+    // Initializes iterator
+    int iter;
+    int NUMCARS;
+    int changeDirCount;
+    int RANDSEED;
+    int crossed = 0;
+    changeDirCount = 0;
+    drivingOneWay = false;
+	    // Create the threads
+    pthread_t threads[NUMCARS];
 
-		printf("TOTAL CARS CROSSED: %d\n", crossedIt);
+    // Helps with generating car ids.
+    trafficLine_t trafficLine;
+	printf("hi");
+    pthread_mutex_init (&trafficLine.mutex, NULL);
+    pthread_cond_init (&trafficLine.done, NULL);
+
+    if( argc < 4){
+        // Set up values to a feault configuration rather than specified thread count/car max.
+        NUMCARS = 10;
+        MAXCARS = 3;
+        changeDirCount = 15;
+        // Default run has a random RANDSEED.
+        RANDSEED = time(NULL);
+        printf("Not enough arguements, using default values.\n");
+    } else{
+        // Initializes the maximum about of threads allowed.
+        NUMCARS = atoi(argv[1]);
+        if(NUMCARS < 1){
+            printf("The number of Cars cannot be below 1. Defaulting value to: 1.\n");
+            NUMCARS = 1;
+        }
+
+        // initializes the maximum threshold of cars the one way can handle at a time.
+        MAXCARS = atoi(argv[2]);
+        if(MAXCARS < 1){
+            printf("Max_Cars value cannot be below 1. Defaulting value to: 1.\n");
+            MAXCARS = 1;
+        }
+
+        // Initializes the number of cars to generate
+        changeDirCount = atoi(argv[3]);
+        if(changeDirCount < 1){
+            printf("The limit of Cars per direction change cycle can't be less than 1, setting to 1...\n");
+            changeDirCount = 1;
+        }
+
+        // Sets the random RANDSEED value for generating car's directions.
+        RANDSEED = atoi(argv[4]);
+    }
+
+    srand(RANDSEED);
+
+    printf("SIMULATION SETTINGS:\n");
+
+    printf("1) Initializing with %d Cars.\n", NUMCARS);
+    printf("2) Maximum # of cars allowed on the one-way: %d\n", MAXCARS);
+    printf("3) Maximum # of cars per one-way cycle: %d\n\n", changeDirCount);
+
+
+
+    // Lock the mutex for car generator
+    pthread_mutex_lock(&trafficLine.mutex);
+
+
+
+    for(iter = 0; iter < NUMCARS; iter++){
+        // Checks the return value of the thread creation to make sure it was able to initialize sucessfully.
+
+        // Changes the current car generator id value
+        trafficLine.id = iter;
+        // randomly generates from seeded value.
+        trafficLine.direction = rand() % 2;
+
+        int thread_creation_check = pthread_create(&threads[iter], NULL, oneVehicle, &trafficLine);
+
+        pthread_cond_wait(&trafficLine.done, &trafficLine.mutex);
+
+        if(thread_creation_check){
+            printf("ERROR CREATING THREAD: %d\n", thread_creation_check);
+            exit(-1);
+        }
+    }
+
+    sleep(.01);
+
+    printf("Finished making threads.\n");
+
+    // Join all the threads
+    for(iter = 0; iter < NUMCARS; iter++){
+        int thread_join_error_check = pthread_join(threads[iter], NULL);
+        if(thread_join_error_check){
+            printf("ERROR Joining threads.\n");
+        }
+    }
+    printf("Finished Joining Threads.\n");
+
+    // Cleans up
+    pthread_mutex_destroy(&trafficLine.mutex);
+    pthread_cond_destroy (&trafficLine.done);
+
+    printf("TOTAL CARS CROSSED: %d\n", crossed);
     return 0;
-
-
-   
 }
