@@ -26,13 +26,7 @@
 #include <sys/time.h>
 #include <stdbool.h>
 
-// typedefs/structs
-typedef struct{
-    pthread_mutex_t mutex;
-    pthread_cond_t done;
-    int id;
-    int direction;
-}trafficLine_t;
+
 
 // constants
 
@@ -44,7 +38,6 @@ typedef struct{
 //static ints
 static int MAXCARS;
 // static int NUMCARS;
-static int RADNSEED;
 // static int VERBOSITY;
 static int crossedIt;
 // static int changeDir;
@@ -61,8 +54,28 @@ pthread_cond_t oneWayUnlock; //unlock the oneway for next wave of traffic
 pthread_mutex_t dirChangeCount; // counting which direction traffic is flowing
 pthread_cond_t dirChanged; // 1 or 0 for direction "boolean"
 //pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
-
+// typedefs/structs
+struct trafficLine{
+    pthread_mutex_t mutex;
+    pthread_cond_t done;
+    int id;
+    int direction;
+};
+typedef struct trafficLine trafficLine_t;
  
+char* directionToString(int direction);
+
+char* directionToString(int direction){
+    char dir[10];
+    if(direction == TO_BOZEMAN){
+        strcpy(dir, "Bozeman");
+    }else{
+        strcpy(dir, "Bridger");
+    }
+
+    char * rtn_ptr = dir;
+    return rtn_ptr;
+}
 
 int arriveOneWay(int carCount, int direction)
 {	
@@ -70,7 +83,7 @@ int arriveOneWay(int carCount, int direction)
 	rc = 0;
 	
 	pthread_mutex_lock(&oneWay);
-	printf("car %d is on the one way facing %d", carCount, direction);
+	printf("car %d has arrived to the one way facing %s\n", carCount, directionToString(direction));
 	
 	while((carsDrivingOneWay >= MAXCARS) || (currentDir != direction) || drivingOneWay)
 	{
@@ -81,7 +94,7 @@ int arriveOneWay(int carCount, int direction)
 			{
 				drivingOneWay = false;
 				currentDir = (currentDir + 1)%2;
-				printf("direction is %d" , currentDir);
+				printf("direction is %d\n" , currentDir);
 			}
 			else if(changedDirCount >= crossedIt)
 			{
@@ -96,7 +109,7 @@ int arriveOneWay(int carCount, int direction)
     changedDirCount++; // update the direction to the other way
     pthread_mutex_unlock(&dirChangeCount); // unlock direction change
     pthread_cond_signal(&dirChanged); // send signal to others
-	printf("putting car on the road towards %d\n", direction); // print some garbage
+	printf("putting car(s) on the road towards %s\n", directionToString(direction)); // print some garbage
 	carsDrivingOneWay++; // add a car to the one way
 	pthread_mutex_unlock(&oneWay); // unlock oneway function
 	pthread_cond_signal(&oneWayUnlock);//signal it's okay to continue traffic
@@ -106,15 +119,15 @@ int arriveOneWay(int carCount, int direction)
 int onOneWay(int carCount, int direction)
 {
 	
-	printf("car %d is on the road going towards %d", carCount, direction);
+	printf("car %d is on the road going towards %s\n", carCount, directionToString(direction));
 	return 0;
 }
 int exitOneWay(int carCount, int direction)
 {
 	pthread_mutex_lock(&oneWay);
-	printf("car %d has left the construction and is heading towards %d", carCount, direction);
+	printf("car %d has left the construction and is heading towards %s\n", carCount, directionToString(direction));
 	carsDrivingOneWay -= 1;
-	printf("cars in construction: %d ", carsDrivingOneWay);
+	printf("cars in construction: %d \n", carsDrivingOneWay);
 	pthread_mutex_unlock(&oneWay);
 	
 	pthread_mutex_lock(&crossedLocker);
@@ -127,7 +140,6 @@ int exitOneWay(int carCount, int direction)
  // TODO: Implement oneVehicle.
 void *oneVehicle(void *arg){
 	int carCount;
-	printf("in oneVehicle");
 
 	pthread_mutex_lock(&(*(trafficLine_t*)(arg)).mutex); //this locks the traffic line moving on the road so other threads (cars) can't run in concurrency
 	carCount = (*(trafficLine_t*)(arg)).id; // gets the car number
@@ -156,8 +168,6 @@ int main(int argc, char* argv[]){
     int crossed = 0;
     changeDirCount = 0;
     drivingOneWay = false;
-	    // Create the threads
-    pthread_t threads[NUMCARS];
 
     // Helps with generating car ids.
     trafficLine_t trafficLine;
@@ -201,13 +211,14 @@ int main(int argc, char* argv[]){
 
     srand(RANDSEED);
 
-    printf("SIMULATION SETTINGS:\n");
+    printf("Bridger to Bozeman simulator\n this was no fun \n");
 
     printf("1) Initializing with %d Cars.\n", NUMCARS);
-    printf("2) Maximum # of cars allowed on the one-way: %d\n", MAXCARS);
-    printf("3) Maximum # of cars per one-way cycle: %d\n\n", changeDirCount);
+    printf("2) Maximum # of cars allowed on the one way: %d\n", MAXCARS);
+    printf("3) Maximum # of cars per one way cycle: %d\n\n", changeDirCount);
 
-
+    // Create the threads
+    pthread_t threads[NUMCARS];
 
     // Lock the mutex for car generator
     pthread_mutex_lock(&trafficLine.mutex);
