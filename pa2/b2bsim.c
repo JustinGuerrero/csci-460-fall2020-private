@@ -116,16 +116,16 @@ int arriveOneWay(int carCount, int direction)
 	return 0;
 }
 
-int onOneWay(int carCount, int direction)
+int onOneWay(int direction)
 {
 	
-	printf("car %d is on the road going towards %s\n", carCount, directionToString(direction));
+	printf("cars are on the road going towards %s\n", directionToString(direction));
 	return 0;
 }
-int exitOneWay(int carCount, int direction)
+int exitOneWay(int direction)
 {
 	pthread_mutex_lock(&oneWay);
-	printf("car %d has left the construction and is heading towards %s\n", carCount, directionToString(direction));
+	printf("All cars have left the construction and are heading towards %s\n", directionToString(direction));
 	carsDrivingOneWay -= 1;
 	printf("cars in construction: %d \n", carsDrivingOneWay);
 	pthread_mutex_unlock(&oneWay);
@@ -149,8 +149,8 @@ void *oneVehicle(void *arg){
 	
 	//call functions to get this mf on the road
 	arriveOneWay(carCount, direction); // car arrives at one way
-	onOneWay(carCount, direction); //car is on the one way road
-	exitOneWay(carCount, direction); // car has left the one way road
+	onOneWay(direction); //car is on the one way road
+	exitOneWay(direction); // car has left the one way road
 	
 	pthread_exit(NULL); // exit threading
 	
@@ -168,7 +168,7 @@ int main(int argc, char* argv[]){
     int crossed = 0;
     changeDirCount = 0;
     drivingOneWay = false;
-
+	printf("hi reese");
     // Helps with generating car ids.
     trafficLine_t trafficLine;
 	printf("hi");
