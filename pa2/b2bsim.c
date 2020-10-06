@@ -168,7 +168,6 @@ int main(int argc, char* argv[]){
     int crossed = 0;
     changeDirCount = 0;
     drivingOneWay = false;
-	printf("hi reese");
     // Helps with generating car ids.
     trafficLine_t trafficLine;
 	printf("hi");
