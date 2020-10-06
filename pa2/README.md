@@ -1,5 +1,7 @@
 # Justin Guerrero : Operating Systems CS460
 ## Programming assignment 2 : Bridger to Bozeman
+### video link : [THAT HOT FYRE B2B SIM VIDEO](https://montana.techsmithrelay.com/3Ka3)
+### Don't forget to SMASH that subscribe button and LIKE it, it really helps me out!
 ## Overview
 The idea of this project is to gain familiarity with threading and synchronized programming by using mutual exclusion locks and condition variables. 
 We will make great use of the ```pthreads``` package. 
